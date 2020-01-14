@@ -5,20 +5,23 @@ using Umbraco.Core.Security;
 using System.Web.Security;
 using System.Web;
 using System.Configuration;
-using umbraco;
 using Microsoft.AspNet.Identity;
 using Umbraco.Core.Logging;
 using Umbraco.Core;
-using Umbraco.Web.Security.Identity;
+using Umbraco.Web.Security;
 using Umbraco.Core.Services;
 using Microsoft.Owin;
 using System.Linq;
+using Umbraco.Core.Configuration;
+using Umbraco.Core.Composing;
+using Umbraco.Web;
 
 namespace UmbBackofficeMembershipProvider
 {
     public class BackofficeMembershipProviderPasswordChecker : IBackOfficeUserPasswordChecker
     {
         private BackOfficeUserManager<BackOfficeIdentityUser> _userManager;
+        IGlobalSettings GlobalSettings = Umbraco.Core.Composing.Current.Configs.Global();
 
         /// <summary>
         /// Get culture to use in creating new accounts.
@@ -96,7 +99,7 @@ namespace UmbBackofficeMembershipProvider
         /// </summary>
         public ServiceContext Services
         {
-            get { return ApplicationContext.Current.Services; }
+            get { return Umbraco.Core.Composing.Current.Services; }
         }
 
         protected BackOfficeUserManager<BackOfficeIdentityUser> UserManager
@@ -138,9 +141,9 @@ namespace UmbBackofficeMembershipProvider
         protected async virtual Task<IdentityResult> NewCreateUser(BackOfficeIdentityUser user, string[] userGroups, string culture, string email = null, string name = null)
         {
             // Mandate that parameters must be specified.
-            Mandate.ParameterNotNull<BackOfficeIdentityUser>(user, "user");
-            Mandate.ParameterNotNullOrEmpty<string>(userGroups, "userGroups");
-            Mandate.ParameterNotNull<string>(culture, "culture");
+            //Mandate.ParameterNotNull<BackOfficeIdentityUser>(user, "user");
+            //Mandate.ParameterNotNullOrEmpty<string>(userGroups, "userGroups");
+            //Mandate.ParameterNotNull<string>(culture, "culture");
 
             // Assign name to user if not already specified. Use name if specified, otherwise use email address.
             user.Name = user.Name ?? name ?? user.UserName;
@@ -189,11 +192,11 @@ namespace UmbBackofficeMembershipProvider
 
                 if (createUserTask.Succeeded)
                 {
-                    LogHelper.Info(typeof(BackofficeMembershipProviderPasswordChecker), String.Format("Created user account {0}.", user.UserName));
+                    Current.Logger.Warn(typeof(BackofficeMembershipProviderPasswordChecker), String.Format("Created user account {0}.", user.UserName));
                 }
                 else
                 {
-                    LogHelper.Warn(typeof(BackofficeMembershipProviderPasswordChecker), String.Format("Failed to create user account {0} with error: {1}.", createUserTask.Errors.ToString()));
+                    Current.Logger.Warn(typeof(BackofficeMembershipProviderPasswordChecker), String.Format("Failed to create user account {0} with error: {1}.", user.UserName, createUserTask.Errors.ToString()));
                 }
 
                 return createUserTask;
