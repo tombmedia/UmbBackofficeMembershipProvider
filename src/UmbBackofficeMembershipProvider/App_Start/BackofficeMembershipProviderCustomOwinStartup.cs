@@ -2,11 +2,12 @@ using Microsoft.Owin;
 using Owin;
 using Umbraco.Core;
 using Umbraco.Core.Security;
-using Umbraco.Web.Security.Identity;
-using UmbBackofficeMembershipProvider;
+using Umbraco.Web.Security;
+using StudentAid.Web.Security;
 using Umbraco.Core.Models.Identity;
 using Umbraco.Web;
 using Umbraco.Core.Configuration;
+using Umbraco.Core.Configuration.UmbracoSettings;
 
 //To use this startup class, change the appSetting value in the web.config called 
 // "owin:appStartup" to be "BackofficeMembershipProviderCustomOwinStartup"
@@ -31,23 +32,26 @@ namespace UmbBackofficeMembershipProvider
         /// <param name="app"></param>
         protected override void ConfigureUmbracoUserManager(IAppBuilder app)
         {
-            app.ConfigureUserManagerForUmbracoBackOffice<BackOfficeUserManager, BackOfficeIdentityUser>(
-                ApplicationContext,
-                (options, context) =>
-                {
-                    var membershipProvider = MembershipProviderExtensions.GetUsersMembershipProvider().AsUmbracoMembershipProvider();
-                    var userManager = BackOfficeUserManager.Create(options,
-                        ApplicationContext.Services.UserService,
-                        ApplicationContext.Services.EntityService,
-                        ApplicationContext.Services.ExternalLoginService,
-                        membershipProvider,
-                        UmbracoConfig.For.UmbracoSettings().Content);
+            var applicationContext = Umbraco.Core.Composing.Current.Services;
+            IGlobalSettings GlobalSettings = Umbraco.Core.Composing.Current.Configs.Global();
+            IUmbracoSettingsSection UmbracoSettings = Umbraco.Core.Composing.Current.Configs.Settings();
 
-                    // Configure custom password checker.
-                    userManager.BackOfficeUserPasswordChecker = new BackofficeMembershipProviderPasswordChecker();
-
-                    return userManager;
-                });
+            app.ConfigureUserManagerForUmbracoBackOffice<BackOfficeUserManager, BackOfficeIdentityUser>(Umbraco.Web.Composing.Current.RuntimeState, GlobalSettings,
+            (options, context) =>
+            {
+                var membershipProvider = MembershipProviderExtensions.GetUsersMembershipProvider().AsUmbracoMembershipProvider();
+                var userManager = BackOfficeUserManager.Create(options,
+                    applicationContext.UserService,
+                    applicationContext.MemberTypeService,
+                    applicationContext.EntityService,
+                    applicationContext.ExternalLoginService,
+                    membershipProvider,
+                    Mapper,
+                    UmbracoSettings.Content, 
+                    GlobalSettings);
+                userManager.BackOfficeUserPasswordChecker = new BackofficeMembershipProviderPasswordChecker();
+                return userManager;
+            });
         }
     }
 }
