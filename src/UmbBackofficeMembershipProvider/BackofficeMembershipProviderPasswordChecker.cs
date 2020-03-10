@@ -192,7 +192,7 @@ namespace UmbBackofficeMembershipProvider
 
                 if (createUserTask.Succeeded)
                 {
-                    Current.Logger.Warn(typeof(BackofficeMembershipProviderPasswordChecker), String.Format("Created user account {0}.", user.UserName));
+                    Current.Logger.Info(typeof(BackofficeMembershipProviderPasswordChecker), String.Format("Created user account {0}.", user.UserName));
                 }
                 else
                 {
